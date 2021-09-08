@@ -43,8 +43,8 @@ def test_delete():
     
 
 def main():
-    # test_post()
-    # test_delete()
+    test_post()
+    test_delete()
     pass
 
 
