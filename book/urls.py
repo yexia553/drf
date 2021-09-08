@@ -1,8 +1,13 @@
 from django.conf.urls import url
-from .views import BookListView, BookDetailView
+from rest_framework.routers import DefaultRouter
+from . import views
 
+
+router = DefaultRouter()
+
+router.register('', views.BookInfoView, basename='books')
 
 urlpatterns = [
-    url(r'^$', BookListView.as_view()),
-    url(r'^(?P<pk>\d+)$', BookDetailView.as_view()),
-]
+    # url(r'^$', views.BookListView.as_view()),
+    # url(r'^(?P<pk>\d+)$', views.BookDetailView.as_view()),
+] + router.urls
