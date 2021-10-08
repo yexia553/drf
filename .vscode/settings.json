@@ -1,4 +1,12 @@
 {
+    "python.analysis.extraPaths": [
+        "./book",
+        "./demo"
+    ],
+    "python.autoComplete.extraPaths": [
+        "./book",
+        "./demo"
+    ],
     "sqltools.connections": [
         {
             "previewLimit": 50,
