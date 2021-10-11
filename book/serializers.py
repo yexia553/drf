@@ -29,6 +29,8 @@ class BookInfoSerializer(serializers.ModelSerializer):
         """
         参数验证函数，用于验证参数的合法性
         """
+        if attrs['read'] < attrs['comment']:
+            raise ValidationError("图书的阅读量应当大于等于评论量！")
         return attrs
 
 
@@ -91,8 +93,10 @@ class BookInfoBaseSerializer(serializers.Serializer):
         return instance
 
 
-class HeroBaseSerializers(serializers.Serializer):
-
+class HeroInfoBaseSerializers(serializers.Serializer):
+    '''
+    基于serializers.Serializer实现HeroInfo的序列化器，实际开发中使用的并不多
+    '''
     GENDER_CHOICES = (
         (0, 'female'),
         (1, 'male')
@@ -102,7 +106,8 @@ class HeroBaseSerializers(serializers.Serializer):
     gender = serializers.ChoiceField(choices=GENDER_CHOICES, label='性别', required=False)
     comment = serializers.CharField(max_length=200, label='描述信息')
     is_delete = serializers.BooleanField(default=False, label='逻辑删除标记')
-    # 当字段为外键时，有四种方法可以处理，如这里的book
+
+    #### 当字段为外键时，有四种方法可以处理，如这里的book
     # 1. 添加read_only=True属性， 这样可以获取到对应book的id，但是只能用作序列化，不能对其进行反序列化
     # book = serializers.PrimaryKeyRelatedField(label='所属图书', read_only=True)
     # 2. 指定queryset，将在反序列化时被用于参数校验，得到的是对应的id

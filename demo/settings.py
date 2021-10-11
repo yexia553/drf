@@ -125,3 +125,11 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# rest framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (  # 默认响应渲染类
+        'rest_framework.renderers.JSONRenderer',  # json渲染器
+        'rest_framework.renderers.BrowsableAPIRenderer',  # 浏览API渲染器
+    )
+}
