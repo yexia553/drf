@@ -16,11 +16,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 
-import book
 from .models import BookInfo, HeroInfo
 from .serializers import BookInfoSerializer, HeroInfoSerializer
-from demo.permissions import HasGroupPermission
+from demo.utils.permissions import HasGroupPermission
 import json
+from .filters import BookInfoFilter
 
 
 class BookInfoModelViewSet(ModelViewSet):
@@ -28,6 +28,7 @@ class BookInfoModelViewSet(ModelViewSet):
     queryset = BookInfo.objects.all()  # 指定可以作用的数据范围
     serializer_class = BookInfoSerializer  # 指定序列化器
     ordering_fields = ('id', 'title') # 指定排序的字段，这样可以在请求中对这些字段进行排序
+    filter_class = BookInfoFilter
 
     # methods表示请求方法；
     # detail表示是否为详情视图，简单来说就是需要不要id，
@@ -48,15 +49,9 @@ class HeroInfoModelViewSet(ModelViewSet):
     '''利用ModelViewSet实现英雄信息视图'''
     queryset = HeroInfo.objects.all()
     serializer_class = HeroInfoSerializer
+    ordering_fields = ['id', 'name']  # 指定可以用于排序的字段
+    filter_fields = ['id', 'name']  # 指定可以用于过滤的字段
 
-    permission_classes = [HasGroupPermission]
-    required_groups = {
-        'GET': ['Service Owners', 'Regular Users', 'Automation'],
-        'PUT': ['Automation'],
-        'PATCH': ['Automation'],
-        'DELETE': ['Automation'],
-        'POST': ['Automation'],
-    }
 
 
 class BookInfoViewSet(ViewSet):

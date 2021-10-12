@@ -145,11 +145,14 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ),
     'DEFAULT_THROTTLE_RATES': { # 限流速率控制
-        'anon': '3/day', # 非认证用户100次每天，根据IP区别不同的用户
+        'anon': '100/day', # 非认证用户100次每天，根据IP区别不同的用户
         'user': '100/minute' # 认证用户100次每分钟，根据id区别不同的用户
     },
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.OrderingFilter'
-    )
+    ),
+    'DEFAULT_PAGINATION_CLASS':  'demo.utils.custom_pagination.PageNumberPagination',
+    'PAGE_SIZE': 100,  # 每页数目
+    'EXCEPTION_HANDLER': 'demo.utils.custom_exception_handler.exception_handler',
 }
