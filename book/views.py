@@ -19,6 +19,7 @@ from rest_framework import status
 import book
 from .models import BookInfo, HeroInfo
 from .serializers import BookInfoSerializer, HeroInfoSerializer
+from demo.permissions import HasGroupPermission
 import json
 
 
@@ -26,6 +27,7 @@ class BookInfoModelViewSet(ModelViewSet):
     '''利用ModelViewSet实现图书信息视图，包含增删查改所有操作'''
     queryset = BookInfo.objects.all()  # 指定可以作用的数据范围
     serializer_class = BookInfoSerializer  # 指定序列化器
+    ordering_fields = ('id', 'title') # 指定排序的字段，这样可以在请求中对这些字段进行排序
 
     # methods表示请求方法；
     # detail表示是否为详情视图，简单来说就是需要不要id，
@@ -46,6 +48,15 @@ class HeroInfoModelViewSet(ModelViewSet):
     '''利用ModelViewSet实现英雄信息视图'''
     queryset = HeroInfo.objects.all()
     serializer_class = HeroInfoSerializer
+
+    permission_classes = [HasGroupPermission]
+    required_groups = {
+        'GET': ['Service Owners', 'Regular Users', 'Automation'],
+        'PUT': ['Automation'],
+        'PATCH': ['Automation'],
+        'DELETE': ['Automation'],
+        'POST': ['Automation'],
+    }
 
 
 class BookInfoViewSet(ViewSet):
