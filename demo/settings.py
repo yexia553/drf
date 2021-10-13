@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters',
     'book',
 ]
 
@@ -131,5 +132,27 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (  # 默认响应渲染类
         'rest_framework.renderers.JSONRenderer',  # json渲染器
         'rest_framework.renderers.BrowsableAPIRenderer',  # 浏览API渲染器
-    )
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',   # 基本认证
+        'rest_framework.authentication.SessionAuthentication',  # session认证
+    ),
+    'DEFAULT_PERMISSION_CLASSES': ( # 权限控制类别
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_THROTTLE_CLASSES': ( # 限流控制类
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ),
+    'DEFAULT_THROTTLE_RATES': { # 限流速率控制
+        'anon': '100/day', # 非认证用户100次每天，根据IP区别不同的用户
+        'user': '100/minute' # 认证用户100次每分钟，根据id区别不同的用户
+    },
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.OrderingFilter'
+    ),
+    'DEFAULT_PAGINATION_CLASS':  'demo.utils.custom_pagination.PageNumberPagination',
+    'PAGE_SIZE': 100,  # 每页数目
+    'EXCEPTION_HANDLER': 'demo.utils.custom_exception_handler.exception_handler',
 }

@@ -6,6 +6,7 @@ from . import views
 router = DefaultRouter()
 
 router.register('bookinfos', views.BookInfoModelViewSet, basename='bookinfo')
+router.register('heroinfos', views.HeroInfoModelViewSet, basename='heroinfo')
 
 urlpatterns = [
     # url(r'^$', views.BookListView.as_view()),
