@@ -29,7 +29,7 @@ class BookInfoModelViewSet(ModelViewSet):
     serializer_class = BookInfoSerializer  # 指定序列化器
     ordering_fields = ('id', 'title') # 指定排序的字段，这样可以在请求中对这些字段进行排序
     filter_class = BookInfoFilter
-
+    
     # methods表示请求方法；
     # detail表示是否为详情视图，简单来说就是需要不要id，
     # 如果需要id,detail就为True，否则为False，

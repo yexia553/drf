@@ -120,7 +120,280 @@ class BookInfoModelViewSet(ModelViewSet):
 /books/bookinfos?ordering=title  
 
 # 过滤器
-    简单应用（笔记）
-    模板应用（AND）
+所谓过滤其实就是在API请求的时候加上一些参数，限制返回的结果，比如只查询id为1的书本信息，或者查询id大于2小于5的书本信息。  
+
+DRF上应用过滤器有两种方式，一种配置简单，但是功能也有限，适用于比较需要简单的场景，另一种代码较多，但是功能强大。  
+
+不论是那种方法，都需要依赖于django-filter，所以需要先安装：  
+`pip install django-filter`  
+
+安装好之后还要修改settings：  
+
+```python
+INSTALLED_APPS = [
+    ...
+    'django_filters',  # 需要在INSTALL_APPS中添加
+]
+
+# rest_framework中也要进行配置
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+}
+```
+
+* **简单应用**  
+
+过滤器的简单应用其实非常简单，只要在视图类中添加上filter_fields属性指定可以用于过滤的字段就可以了，如下：  
+
+```python
+class HeroInfoModelViewSet(ModelViewSet):
+    queryset = HeroInfo.objects.all()
+    serializer_class = HeroInfoSerializer
+    ordering_fields = ['id', 'name']
+    filter_fields = ['id', 'name']  # 指定可以用于过滤的字段
+```
+
+上面的代码中指明了可以对id和name进行过滤，比如： 
+`GET /books/heroinfos?id=1`  
+`GET /books/heroinfos?name=袁隆平`  
+
+虽然这种方法很简单就能实现过滤的功能，但是也如上面的两个例子展示的那样，只能实现很简单的过滤，在过滤的时候必须明确地指定需要过滤的参数和对应的值，没办法搜索一个范围，比如我想搜索id大于2小于5之间所有的英雄就只能一次查询id=3,id=4，不能一次性查询。  
+而且对于诸如时间这样的数据类型，这种简单的过滤器也只能按照字符串处理，而不能按照时间格式来处理。  
+
+* **高级应用**
+
+过滤器的高级应用需要配置多种数据类型的处理方式和自定义一个过滤器类。  
+
+1. 在应用路径（book）下创建一个filters.py文件
+filters.py里面主要包含两部分，一是各种数据类型的处理方式，比如布尔类型、字符串、时间等等，二是为视图类编写过滤器类，下面的代码中为BookInfoModelViewSet编写的过滤器类。
+
+```python
+from django_filters import rest_framework as filters
+from . import models
+
+BOOLEAN_LOOKUP = [
+    'isnull',
+    'exact',
+    'in',
+]
+
+STRING_LOOKUP = [
+    'iexact',
+    'contains',
+    'icontains',
+    'startswith',
+    'istartswith',
+    'endswith',
+    'iendswith',
+    'regex',
+    'iregex',
+] + BOOLEAN_LOOKUP
+
+NUMBER_LOOKUP = [
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+    'range',
+] + BOOLEAN_LOOKUP
+
+DATE_LOOKUP = [
+    'year',
+    'year__gt',
+    'year__gte',
+    'year__lt',
+    'year__lte',
+    'month',
+    'month__gt',
+    'month__gte',
+    'month__lt',
+    'month__lte',
+    'day',
+    'day__gt',
+    'day__gte',
+    'day__lt',
+    'day__lte',
+    'week',
+    'week__gt',
+    'week__gte',
+    'week__lt',
+    'week__lte',
+    'week_day',
+    'week_day__gt',
+    'week_day__gte',
+    'week_day__lt',
+    'week_day__lte',
+    'quarter',
+    'quarter__gt',
+    'quarter__gte',
+    'quarter__lt',
+    'quarter__lte',
+] + NUMBER_LOOKUP
+
+TIME_LOOKUP = [
+    'hour',
+    'hour__gt',
+    'hour__gte',
+    'hour__lt',
+    'hour__lte',
+    'minute',
+    'minute__gt',
+    'minute__gte',
+    'minute__lt',
+    'minute__lte',
+    'second',
+    'second__gt',
+    'second__gte',
+    'second__lt',
+    'second__lte',
+] + NUMBER_LOOKUP
+
+DATETIME_LOOKUP = set([
+    'date',
+    'date__gt',
+    'date__gte',
+    'date__lt',
+    'date__lte',
+    'time',
+    'time__gt',
+    'time__gte',
+    'time__lt',
+    'time__lte',
+] + DATE_LOOKUP + TIME_LOOKUP)
+
+RESOLUTIONS = [
+    'years',
+    'months',
+    'days',
+    'hours',
+    'minutes',
+    'seconds',
+]
+
+TRUNC_DATETIME = [
+    'year',
+    'quarter',
+    'month',
+    'week',
+    'day',
+    'hour'
+]
+
+
+class BookInfoFilter(filters.FilterSet):
+    '''
+    为图书信息API配置过滤器
+    '''
+    class Meta:
+        model = models.BookInfo  # 指定作用的数据库模型类
+        # 指定需要为哪些字段设置过滤器
+        fields = {
+            'id': NUMBER_LOOKUP,
+            'title': STRING_LOOKUP,
+            'pub_date': DATE_LOOKUP,
+            'read': NUMBER_LOOKUP,
+            'is_delete': BOOLEAN_LOOKUP
+        }
+```
+
+2. 在视图类中添加filter_class字段
+
+```python
+class BookInfoModelViewSet(ModelViewSet):
+    queryset = BookInfo.objects.all()
+    serializer_class = BookInfoSerializer
+    ordering_fields = ('id', 'title')
+    filter_class = BookInfoFilter  # 指定过滤器类
+```
+
+到这里就可以使用过滤器了。   
+查询id大于10的书： `GET /books/bookinfos/?id__gte=10`  
+查询出版年份早于1986年的书：  `GET /books/bookinfos/?pub_date__year__lt=1986`
+查询书本名字以“天”开头的书：  `GET /books/bookinfos/?title__startswith=天`
+过滤器的高级使用基本就是这样
+
 # 分页
+分页其实就是把数据库中的数据分批返回给请求者，而不是一次性把所有的数据都返回给请求者，这样容易出问题，比如数据库中商品表有一千万条数据，总不能一次性把者一千万条数据都返回给请求者，这样服务器要多大的配置才能完成，而且客户端也没办法接收这么多数据。  
+
+应用分页有如下几个步骤：  
+1. 创建自定义的分页处理器
+文件位置如下：demo.utils.custom_pagination.py
+
+```python
+from rest_framework.pagination import PageNumberPagination as PNPG
+
+
+class PageNumberPagination(PNPG):
+    '''
+    自定义分页类
+    '''
+    page_query_param = 'page'  # 前端查询某一页的参数名，如/books/bookinfos/?page=2
+    page_size_query_param = 'page_size'  # 前端指定每一页返回的数据的条数，如/books/bookinfos/
+    page_size = 5  # 后端默认设置的每页返回的数据的条数
+    max_page_size = 5  # 前端允许的最大自定义每页的数据条数，也就是上面page_size的最大值
+```
+
+2. 修改settings文件
+
+```python
+# rest framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS':  'demo.utils.custom_pagination.PageNumberPagination',
+    'PAGE_SIZE': 100,  # 每页返回的数据调数，可以在分页处理器类中覆盖
+}
+```
+
+3. 使用  
+查询第二页内容： `GET /books/bookinfos/?page=2`
+查询第二页，并且让每一页返回3条数据：  `GET /books/bookinfos/?page=2&page_size=3`
+
 # 异常处理
+DRF还有一个功能就是可以捕捉异常，默认情况下可以捕捉的异常如下：  
+1. APIException 所有异常的父类
+2. ParseError 解析错误
+3. AuthenticationFailed 认证失败
+4. NotAuthenticated 尚未认证
+5. PermissionDenied 权限决绝
+6. NotFound 未找到
+7. MethodNotAllowed 请求方式不支持
+8. NotAcceptable 要获取的数据格式不支持
+9. Throttled 超过限流次数
+10. ValidationError 校验失败
+
+虽然能够捕捉的异常已经很多了，但是不可能捕捉所有的异常，这里以数据库异常为例。 
+
+首先要创建自定义异常处理函数：  
+
+```python
+from rest_framework.views import exception_handler as drf_exception_handler
+from rest_framework import status
+from rest_framework.response import Response
+from django.db import DatabaseError
+
+
+def exception_handler(exc, context):
+    '''
+    在drf原本捕捉异常能力的基础上添加自定义的异常捕捉
+    '''
+    response = drf_exception_handler(exc, context)
+
+    # 自定义数据库异常捕捉
+    if response is None:
+        if isinstance(exc, DatabaseError):
+            response = Response({'detail:数据库错误！'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return response
+```   
+
+然后还要修改settings文件：  
+
+```python
+# rest framework settings
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'demo.utils.custom_exception_handler.exception_handler',
+}
+```
+
+这样就算可以了，如果想要验证的话，可以手动raise一个DatabaseError看看DRF能否捕捉到，这里没有准备案例。
